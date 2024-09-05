@@ -1,86 +1,165 @@
- <!DOCTYPE html>  
-    <html lang="zh">  
-    <head>  
-        <meta charset="UTF-8">  
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-        <title>简单H5游戏</title>  
-        <style>  
-            body {  
-                display: flex;  
-                flex-direction: column;  
-                align-items: center;  
-                justify-content: center;  
-                height: 100vh;  
-                background-color: #f0f0f0;  
-                font-family: Arial, sans-serif;  
-            }  
-            #gameCanvas {  
-                border: 2px solid #333;  
-            }  
-            #startButton {  
-                margin-top: 20px;  
-                padding: 10px 20px;  
-                background-color: blue;  
-                color: white;  
-                border: none;  
-                border-radius: 5px;  
-                cursor: pointer;  
-            }  
-        </style>  
-    </head>  
-    <body>  
-        <h1>简单H5游戏</h1>  
-        <canvas id="gameCanvas" width="400" height="400"></canvas>  
-        <button id="startButton">开始游戏</button>  
+<!DOCTYPE html>  
+<html lang="zh">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>彩虹气球大挑战（7分钟版）</title>  
+    <style>  
+        body {  
+            margin: 0;  
+            padding: 0;  
+            display: flex;  
+            justify-content: center;  
+            align-items: center;  
+            height: 100vh;  
+            background-color: #f0f0f0;  
+            font-family: Arial, sans-serif;  
+        }  
+        #gameCanvas {  
+            border: 2px solid #333;  
+            background-color: #fff;  
+        }  
+        #gameInfo {  
+            position: absolute;  
+            top: 10px;  
+            left: 10px;  
+            font-size: 18px;  
+            color: #333;  
+        }  
+        #startButton {  
+            position: absolute;  
+            top: 50%;  
+            left: 50%;  
+            transform: translate(-50%, -50%);  
+            font-size: 24px;  
+            padding: 10px 20px;  
+            cursor: pointer;  
+        }  
+    </style>  
+</head>  
+<body>  
+    <canvas id="gameCanvas"></canvas>  
+    <div id="gameInfo">  
+        分数: <span id="score">0</span><br>  
+        时间: <span id="time">420</span>秒  
+    </div>  
+    <button id="startButton">开始游戏</button>  
 
-        <script>  
-            const canvas = document.getElementById('gameCanvas');  
-            const ctx = canvas.getContext('2d');  
+    <script>  
+        const canvas = document.getElementById('gameCanvas');  
+        const ctx = canvas.getContext('2d');  
+        const scoreElement = document.getElementById('score');  
+        const timeElement = document.getElementById('time');  
+        const startButton = document.getElementById('startButton');  
 
-            let score = 0;  
-            let isPlaying = false;  
+        canvas.width = window.innerWidth - 20;  
+        canvas.height = window.innerHeight - 20;  
 
-            function drawCircle() {  
-                const x = Math.random() * (canvas.width - 30) + 15;  
-                const y = Math.random() * (canvas.height - 30) + 15;  
-                ctx.clearRect(0, 0, canvas.width, canvas.height);  
-                ctx.fillStyle = 'red';  
+        let score = 0;  
+        let time = 420; // 修改为420秒（7分钟）  
+        let balloons = [];  
+        let gameInterval;  
+        let difficultyInterval;  
+        let isGameRunning = false;  
+
+        class Balloon {  
+            constructor() {  
+                this.radius = 20;  
+                this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;  
+                this.y = canvas.height + this.radius;  
+                this.speed = Math.random() * 1 + 0.5;  
+                this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;  
+            }  
+
+            draw() {  
                 ctx.beginPath();  
-                ctx.arc(x, y, 15, 0, Math.PI * 2);  
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);  
+                ctx.fillStyle = this.color;  
                 ctx.fill();  
-                return { x, y };  
+                ctx.closePath();  
             }  
 
-            let target = drawCircle();  
-
-            canvas.addEventListener('click', (event) => {  
-                const rect = canvas.getBoundingClientRect();  
-                const mouseX = event.clientX - rect.left;  
-                const mouseY = event.clientY - rect.top;  
-
-                const dx = mouseX - target.x;  
-                const dy = mouseY - target.y;  
-                if (Math.sqrt(dx * dx + dy * dy) < 15) {  
-                    score++;  
-                    target = drawCircle();  
-                }  
-            });  
-
-            document.getElementById('startButton').addEventListener('click', () => {  
-                score = 0;  
-                isPlaying = true;  
-                startGame();  
-            });  
-
-            function startGame() {  
-                ctx.clearRect(0, 0, canvas.width, canvas.height);  
-                ctx.font = '20px Arial';  
-                ctx.fillText(`得分: ${score}`, 10, 20);  
-                drawCircle();  
-                if (isPlaying) {  
-                    setTimeout(startGame, 1000);  
-                }  
+            update() {  
+                this.y -= this.speed;  
             }  
-        </script>  
-    </body>  
-    </html>  
+        }  
+
+        function createBalloon() {  
+            balloons.push(new Balloon());  
+        }  
+
+        function updateGame() {  
+            ctx.clearRect(0, 0, canvas.width, canvas.height);  
+
+            balloons = balloons.filter(balloon => balloon.y + balloon.radius > 0);  
+
+            balloons.forEach(balloon => {  
+                balloon.update();  
+                balloon.draw();  
+            });  
+
+            scoreElement.textContent = score;  
+            timeElement.textContent = time;  
+        }  
+
+        function increaseDifficulty() {  
+            createBalloon();  
+            balloons.forEach(balloon => balloon.speed += 0.015); // 稍微减小速度增加量  
+        }  
+
+        function startGame() {  
+            if (isGameRunning) return;  
+            isGameRunning = true;  
+            score = 0;  
+            time = 420; // 修改为420秒（7分钟）  
+            balloons = [];  
+
+            // 初始创建多个气球  
+            for (let i = 0; i < 5; i++) {  
+                createBalloon();  
+            }  
+
+            gameInterval = setInterval(() => {  
+                updateGame();  
+                time--;  
+                if (time <= 0) {  
+                    endGame();  
+                }  
+            }, 1000 / 60);  
+
+            difficultyInterval = setInterval(increaseDifficulty, 6000); // 每6秒增加难度  
+
+            startButton.style.display = 'none';  
+        }  
+
+        function endGame() {  
+            clearInterval(gameInterval);  
+            clearInterval(difficultyInterval);  
+            isGameRunning = false;  
+            alert(`游戏结束！你的得分是: ${score}`);  
+            startButton.style.display = 'block';  
+        }  
+
+        canvas.addEventListener('click', (event) => {  
+            if (!isGameRunning) return;  
+            const rect = canvas.getBoundingClientRect();  
+            const clickX = event.clientX - rect.left;  
+            const clickY = event.clientY - rect.top;  
+
+            balloons.forEach((balloon, index) => {  
+                const dx = clickX - balloon.x;  
+                const dy = clickY - balloon.y;  
+                const distance = Math.sqrt(dx * dx + dy * dy);  
+
+                if (distance < balloon.radius) {  
+                    balloons.splice(index, 1);  
+                    score += 10;  
+                    createBalloon(); // 每点击一个气球就创建一个新的  
+                }  
+            });  
+        });  
+
+        startButton.addEventListener('click', startGame);  
+    </script>  
+</body>  
+</html>  
