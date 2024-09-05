@@ -1,165 +1,169 @@
-<!DOCTYPE html>  
-<html lang="zh">  
-<head>  
-    <meta charset="UTF-8">  
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-    <title>彩虹气球大挑战（7分钟版）</title>  
-    <style>  
-        body {  
-            margin: 0;  
-            padding: 0;  
-            display: flex;  
-            justify-content: center;  
-            align-items: center;  
-            height: 100vh;  
-            background-color: #f0f0f0;  
-            font-family: Arial, sans-serif;  
-        }  
-        #gameCanvas {  
-            border: 2px solid #333;  
-            background-color: #fff;  
-        }  
-        #gameInfo {  
-            position: absolute;  
-            top: 10px;  
-            left: 10px;  
-            font-size: 18px;  
-            color: #333;  
-        }  
-        #startButton {  
-            position: absolute;  
-            top: 50%;  
-            left: 50%;  
-            transform: translate(-50%, -50%);  
-            font-size: 24px;  
-            padding: 10px 20px;  
-            cursor: pointer;  
-        }  
-    </style>  
-</head>  
-<body>  
-    <canvas id="gameCanvas"></canvas>  
-    <div id="gameInfo">  
-        分数: <span id="score">0</span><br>  
-        时间: <span id="time">420</span>秒  
-    </div>  
-    <button id="startButton">开始游戏</button>  
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>彩虹气球大挑战</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            border: 2px solid #333;
+            background-color: #fff;
+        }
+        #gameInfo {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 18px;
+            color: #333;
+        }
+        #startButton {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="gameInfo">
+    分数: <span id="score">0</span><br>
+    时间: <span id="time">00:45</span>
+</div>
+<button id="startButton">开始游戏</button>
 
-    <script>  
-        const canvas = document.getElementById('gameCanvas');  
-        const ctx = canvas.getContext('2d');  
-        const scoreElement = document.getElementById('score');  
-        const timeElement = document.getElementById('time');  
-        const startButton = document.getElementById('startButton');  
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreElement = document.getElementById('score');
+    const timeElement = document.getElementById('time');
+    const startButton = document.getElementById('startButton');
 
-        canvas.width = window.innerWidth - 20;  
-        canvas.height = window.innerHeight - 20;  
+    canvas.width = window.innerWidth - 20;
+    canvas.height = window.innerHeight - 20;
 
-        let score = 0;  
-        let time = 420; // 修改为420秒（7分钟）  
-        let balloons = [];  
-        let gameInterval;  
-        let difficultyInterval;  
-        let isGameRunning = false;  
+    let score = 0;
+    let timeRemaining = 45; // 45秒
+    let balloons = [];
+    let gameInterval;
+    let difficultyInterval;
+    let timerInterval;
+    let isGameRunning = false;
 
-        class Balloon {  
-            constructor() {  
-                this.radius = 20;  
-                this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;  
-                this.y = canvas.height + this.radius;  
-                this.speed = Math.random() * 1 + 0.5;  
-                this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;  
-            }  
+    class Balloon {
+        constructor() {
+            this.radius = 20;
+            this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;
+            this.y = canvas.height + this.radius;
+            this.speed = Math.random() * 1.5 + 1; // 增加初始速度
+            this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        }
 
-            draw() {  
-                ctx.beginPath();  
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);  
-                ctx.fillStyle = this.color;  
-                ctx.fill();  
-                ctx.closePath();  
-            }  
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.closePath();
+        }
 
-            update() {  
-                this.y -= this.speed;  
-            }  
-        }  
+        update() {
+            this.y -= this.speed;
+        }
+    }
 
-        function createBalloon() {  
-            balloons.push(new Balloon());  
-        }  
+    function createBalloon() {
+        balloons.push(new Balloon());
+    }
 
-        function updateGame() {  
-            ctx.clearRect(0, 0, canvas.width, canvas.height);  
+    function updateGame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            balloons = balloons.filter(balloon => balloon.y + balloon.radius > 0);  
+        balloons = balloons.filter(balloon => balloon.y + balloon.radius > 0);
 
-            balloons.forEach(balloon => {  
-                balloon.update();  
-                balloon.draw();  
-            });  
+        balloons.forEach(balloon => {
+            balloon.update();
+            balloon.draw();
+        });
 
-            scoreElement.textContent = score;  
-            timeElement.textContent = time;  
-        }  
+        scoreElement.textContent = score;
+    }
 
-        function increaseDifficulty() {  
-            createBalloon();  
-            balloons.forEach(balloon => balloon.speed += 0.015); // 稍微减小速度增加量  
-        }  
+    function updateTimer() {
+        if (timeRemaining > 0) {
+            timeRemaining--;
+            const seconds = timeRemaining % 60;
+            timeElement.textContent = `00:${seconds.toString().padStart(2, '0')}`;
+        } else {
+            endGame();
+        }
+    }
 
-        function startGame() {  
-            if (isGameRunning) return;  
-            isGameRunning = true;  
-            score = 0;  
-            time = 420; // 修改为420秒（7分钟）  
-            balloons = [];  
+    function increaseDifficulty() {
+        createBalloon();
+        balloons.forEach(balloon => balloon.speed += 0.1); // 更快地增加难度
+    }
 
-            // 初始创建多个气球  
-            for (let i = 0; i < 5; i++) {  
-                createBalloon();  
-            }  
+    function startGame() {
+        if (isGameRunning) return;
+        isGameRunning = true;
+        score = 0;
+        timeRemaining = 45;
+        balloons = [];
 
-            gameInterval = setInterval(() => {  
-                updateGame();  
-                time--;  
-                if (time <= 0) {  
-                    endGame();  
-                }  
-            }, 1000 / 60);  
+        for (let i = 0; i < 8; i++) { // 开始时创建更多气球
+            createBalloon();
+        }
 
-            difficultyInterval = setInterval(increaseDifficulty, 6000); // 每6秒增加难度  
+        gameInterval = setInterval(updateGame, 1000 / 60);
+        timerInterval = setInterval(updateTimer, 1000);
+        difficultyInterval = setInterval(increaseDifficulty, 3000); // 每3秒增加难度
 
-            startButton.style.display = 'none';  
-        }  
+        startButton.style.display = 'none';
+    }
 
-        function endGame() {  
-            clearInterval(gameInterval);  
-            clearInterval(difficultyInterval);  
-            isGameRunning = false;  
-            alert(`游戏结束！你的得分是: ${score}`);  
-            startButton.style.display = 'block';  
-        }  
+    function endGame() {
+        clearInterval(gameInterval);
+        clearInterval(difficultyInterval);
+        clearInterval(timerInterval);
+        isGameRunning = false;
+        alert(`游戏结束！你的得分是: ${score}`);
+        startButton.style.display = 'block';
+    }
 
-        canvas.addEventListener('click', (event) => {  
-            if (!isGameRunning) return;  
-            const rect = canvas.getBoundingClientRect();  
-            const clickX = event.clientX - rect.left;  
-            const clickY = event.clientY - rect.top;  
+    canvas.addEventListener('click', (event) => {
+        if (!isGameRunning) return;
+        const rect = canvas.getBoundingClientRect();
+        const clickX = event.clientX - rect.left;
+        const clickY = event.clientY - rect.top;
 
-            balloons.forEach((balloon, index) => {  
-                const dx = clickX - balloon.x;  
-                const dy = clickY - balloon.y;  
-                const distance = Math.sqrt(dx * dx + dy * dy);  
+        balloons.forEach((balloon, index) => {
+            const dx = clickX - balloon.x;
+            const dy = clickY - balloon.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
 
-                if (distance < balloon.radius) {  
-                    balloons.splice(index, 1);  
-                    score += 10;  
-                    createBalloon(); // 每点击一个气球就创建一个新的  
-                }  
-            });  
-        });  
+            if (distance < balloon.radius) {
+                balloons.splice(index, 1);
+                score += 10;
+                createBalloon();
+            }
+        });
+    });
 
-        startButton.addEventListener('click', startGame);  
-    </script>  
-</body>  
-</html>  
+    startButton.addEventListener('click', startGame);
+</script>
+</body>
+</html> 
