@@ -1,122 +1,86 @@
-<!DOCTYPE html>  
-<html lang="zh">  
-<head>  
-    <meta charset="UTF-8">  
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-    <title>点击方块游戏</title>  
-    <style>  
-        body {  
-            display: flex;  
-            flex-direction: column;  
-            align-items: center;  
-            justify-content: center;  
-            height: 100vh;  
-            margin: 0;  
-            font-family: Arial, sans-serif;  
-        }  
-        #gameArea {  
-            width: 90vw;  
-            height: 90vh;  
-            position: relative;  
-            overflow: hidden;  
-            border: 2px solid #333;  
-        }  
-        .block {  
-            width: 50px;  
-            height: 50px;  
-            position: absolute;  
-            background-color: #FF5733;  
-            cursor: pointer;  
-        }  
-        .score {  
-            margin-top: 20px;  
-            font-size: 24px;  
-        }  
-        #auth {  
-            display: none;  
-        }  
-    </style>  
-</head>  
-<body>  
-    <h1>点击方块游戏</h1>  
-    <div id="auth">  
-        <h2>注册</h2>  
-        <input type="text" id="register-username" placeholder="用户名">  
-        <input type="password" id="register-password" placeholder="密码">  
-        <button onclick="register()">注册</button>  
-
-        <h2>登录</h2>  
-        <input type="text" id="login-username" placeholder="用户名">  
-        <input type="password" id="login-password" placeholder="密码">  
-        <button onclick="login()">登录</button>  
-    </div>  
-    <div id="gameArea"></div>  
-    <div class="score">分数: <span id="score">0</span></div>  
-
-    <script>  
-        const gameArea = document.getElementById('gameArea');  
-        const scoreDisplay = document.getElementById('score');  
-        let score = 0;  
-
-        // 检查用户是否已登录  
-        function checkLogin() {  
-            const token = localStorage.getItem('token');  
-            if (token) {  
-                document.getElementById('auth').style.display = 'none';  
-                startGame();  
-            } else {  
-                document.getElementById('auth').style.display = 'block';  
+ <!DOCTYPE html>  
+    <html lang="zh">  
+    <head>  
+        <meta charset="UTF-8">  
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+        <title>简单H5游戏</title>  
+        <style>  
+            body {  
+                display: flex;  
+                flex-direction: column;  
+                align-items: center;  
+                justify-content: center;  
+                height: 100vh;  
+                background-color: #f0f0f0;  
+                font-family: Arial, sans-serif;  
             }  
-        }  
-
-        function startGame() {  
-            createBlock();  
-        }  
-
-        function createBlock() {  
-            const block = document.createElement('div');  
-            block.classList.add('block');  
-            block.style.top = Math.random() * (gameArea.clientHeight - 50) + 'px';  
-            block.style.left = Math.random() * (gameArea.clientWidth - 50) + 'px';  
-            block.addEventListener('click', () => {  
-                score++;  
-                scoreDisplay.textContent = score;  
-                block.remove();  
-                createBlock();  
-            });  
-            gameArea.appendChild(block);  
-        }  
-
-        async function register() {  
-            const username = document.getElementById('register-username').value;  
-            const password = document.getElementById('register-password').value;  
-            await fetch('http://localhost:3000/register', {  
-                method: 'POST',  
-                headers: { 'Content-Type': 'application/json' },  
-                body: JSON.stringify({ username, password }),  
-            });  
-        }  
-
-        async function login() {  
-            const username = document.getElementById('login-username').value;  
-            const password = document.getElementById('login-password').value;  
-            const response = await fetch('http://localhost:3000/login', {  
-                method: 'POST',  
-                headers: { 'Content-Type': 'application/json' },  
-                body: JSON.stringify({ username, password }),  
-            });  
-            if (response.ok) {  
-                const data = await response.json();  
-                localStorage.setItem('token', data.token);  
-                document.getElementById('auth').style.display = 'none';  
-                startGame();  
-            } else {  
-                alert('登录失败');  
+            #gameCanvas {  
+                border: 2px solid #333;  
             }  
-        }  
+            #startButton {  
+                margin-top: 20px;  
+                padding: 10px 20px;  
+                background-color: blue;  
+                color: white;  
+                border: none;  
+                border-radius: 5px;  
+                cursor: pointer;  
+            }  
+        </style>  
+    </head>  
+    <body>  
+        <h1>简单H5游戏</h1>  
+        <canvas id="gameCanvas" width="400" height="400"></canvas>  
+        <button id="startButton">开始游戏</button>  
 
-        // 页面加载时检查登录状态  
-        window.onload = checkLogin;  
-    </script>  
-</body>  
-</html>
+        <script>  
+            const canvas = document.getElementById('gameCanvas');  
+            const ctx = canvas.getContext('2d');  
+
+            let score = 0;  
+            let isPlaying = false;  
+
+            function drawCircle() {  
+                const x = Math.random() * (canvas.width - 30) + 15;  
+                const y = Math.random() * (canvas.height - 30) + 15;  
+                ctx.clearRect(0, 0, canvas.width, canvas.height);  
+                ctx.fillStyle = 'red';  
+                ctx.beginPath();  
+                ctx.arc(x, y, 15, 0, Math.PI * 2);  
+                ctx.fill();  
+                return { x, y };  
+            }  
+
+            let target = drawCircle();  
+
+            canvas.addEventListener('click', (event) => {  
+                const rect = canvas.getBoundingClientRect();  
+                const mouseX = event.clientX - rect.left;  
+                const mouseY = event.clientY - rect.top;  
+
+                const dx = mouseX - target.x;  
+                const dy = mouseY - target.y;  
+                if (Math.sqrt(dx * dx + dy * dy) < 15) {  
+                    score++;  
+                    target = drawCircle();  
+                }  
+            });  
+
+            document.getElementById('startButton').addEventListener('click', () => {  
+                score = 0;  
+                isPlaying = true;  
+                startGame();  
+            });  
+
+            function startGame() {  
+                ctx.clearRect(0, 0, canvas.width, canvas.height);  
+                ctx.font = '20px Arial';  
+                ctx.fillText(`得分: ${score}`, 10, 20);  
+                drawCircle();  
+                if (isPlaying) {  
+                    setTimeout(startGame, 1000);  
+                }  
+            }  
+        </script>  
+    </body>  
+    </html>  
